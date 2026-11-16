@@ -38,6 +38,9 @@ DefaultMaxResult is the default bound of [WithMaxResult](#func-withmaxresult), a
 ```go
 type Client struct {
 
+	// metrics are the metrics of the client as it calls them, through
+	// call; nil without metrics.
+
 	// the most recent link, current or ended
 	// of the current or the last connection
 
@@ -137,6 +140,8 @@ func (c *Client) Connect(ctx context.Context) error
 Connect establishes the transport connection and, unless disabled with [WithAutoStart](#func-withautostart), starts data transfer. The connection attempt is bounded by ctx and by t0, whichever is shorter.
 
 Connect fails with [iec104.ErrBusy](https://pkg.go.dev/github.com/otfabric/go-iec60870-5/iec104#ErrBusy) when the client is already connected or connecting. With [WithReconnect](#func-withreconnect) it only needs to succeed once: the client re-establishes a lost connection by itself.
+
+A client that is closed while Connect runs, by Close or by a callback that does not return normally, makes Connect fail with [iec104.ErrClosed](https://pkg.go.dev/github.com/otfabric/go-iec60870-5/iec104#ErrClosed), also when the station has confirmed STARTDT by then; after a callback, the error is the failure that names it, which wraps ErrClosed.
 
 #### func (Client) CounterInterrogate
 
@@ -475,7 +480,7 @@ HandleASDU is called from a single goroutine per connection, in the order the AS
 
 It may call [Client.Send](#func-client-send), [Client.State](#func-client-state) and [Client.Close](#func-client-close). It must not call the request methods ([Client.Command](#func-client-command), [Client.Interrogate](#func-client-interrogate), [Client.Read](#func-client-read) and the like): their answers are delivered by the very goroutine the handler is running on, so they would only time out. Start a goroutine for work that needs them.
 
-A handler that does not return normally is logged with its stack and closes the client: the state handler is told "disconnected" with an error wrapping [iec104.ErrClosed](https://pkg.go.dev/github.com/otfabric/go-iec60870-5/iec104#ErrClosed) that names the handler. The same holds for the state handler, the start handler ([WithStartHandler](#func-withstarthandler)); the switch handler of a [Group](#type-group) ([WithSwitchHandler](#func-withswitchhandler)) closes the group.
+A handler that does not return normally is logged with its stack and closes the client: the state handler is told "disconnected" with an error wrapping [iec104.ErrClosed](https://pkg.go.dev/github.com/otfabric/go-iec60870-5/iec104#ErrClosed) that names the handler. The same holds for the state handler, the start handler ([WithStartHandler](#func-withstarthandler)), the [Dialer](#type-dialer) ([WithDialer](#func-withdialer)) and the metrics ([WithMetrics](#func-withmetrics)); the switch handler of a [Group](#type-group) ([WithSwitchHandler](#func-withswitchhandler)) closes the group.
 
 The \*asdu.ASDU is shared: an ASDU that a request collects is the same value the request returns to its caller, on another goroutine, and the client reads it while it matches answers. Treat it as read-only; copy what you need to change.
 
@@ -525,7 +530,7 @@ WithAutoStart controls whether STARTDT is sent as part of connecting and reconne
 func WithDialer(d Dialer) Option
 ```
 
-WithDialer replaces the transport dialer, for example to bind a local address, go through a proxy or connect over an in-memory pipe in tests. When combined with [WithTLS](#func-withtls) the TLS handshake runs on top of the connection the dialer returns. A dialer that returns neither a connection nor an error fails the connect with [iec104.ErrConnectFailed](https://pkg.go.dev/github.com/otfabric/go-iec60870-5/iec104#ErrConnectFailed).
+WithDialer replaces the transport dialer, for example to bind a local address, go through a proxy or connect over an in-memory pipe in tests. When combined with [WithTLS](#func-withtls) the TLS handshake runs on top of the connection the dialer returns. A dialer that returns neither a connection nor an error fails the connect with [iec104.ErrConnectFailed](https://pkg.go.dev/github.com/otfabric/go-iec60870-5/iec104#ErrConnectFailed). One that does not return normally is logged with its stack and closes the client, as for the [Handler](#type-handler): the connect fails with [iec104.ErrClosed](https://pkg.go.dev/github.com/otfabric/go-iec60870-5/iec104#ErrClosed).
 
 #### func WithHandler
 
@@ -541,7 +546,7 @@ WithHandler sets the receiver of ASDUs. Without one, received ASDUs are only vis
 func WithLogger(l iec60870.Logger) Option
 ```
 
-WithLogger sets the logger. Nil, the default, disables logging.
+WithLogger sets the logger. Nil, the default, disables logging. A call of the logger that does not return normally loses its entry, which is written once more, with the value and the stack, through the logger's Errorf; the client goes on.
 
 #### func WithMaxResult
 
@@ -557,7 +562,7 @@ WithMaxResult bounds what one collecting request returns: the ASDUs of [Client.I
 func WithMetrics(m iec104.Metrics) Option
 ```
 
-WithMetrics sets the metrics callbacks. Nil, the default, disables them.
+WithMetrics sets the metrics callbacks. Nil, the default, disables them. A callback that does not return normally, of [iec104.RequestMetrics](https://pkg.go.dev/github.com/otfabric/go-iec60870-5/iec104#RequestMetrics) included, is logged with its stack and closes the client, as for the [Handler](#type-handler); Connect, the reconnect loop or the request that called it goes on to fail with [iec104.ErrClosed](https://pkg.go.dev/github.com/otfabric/go-iec60870-5/iec104#ErrClosed).
 
 #### func WithOriginator
 
