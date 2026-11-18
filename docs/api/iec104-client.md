@@ -197,6 +197,16 @@ ListFiles calls the directory of the controlled station (F\_SC\_NA\_1 with cause
 
 A station without a directory answers with the mirrored call, which is reported as [\*iec104.NegativeError](https://pkg.go.dev/github.com/otfabric/go-iec60870-5/iec104#NegativeError). A directory of more entries than [WithMaxResult](#func-withmaxresult) allows ends the request there with the entries so far and an error wrapping [telecontrol.ErrResultLimit](https://pkg.go.dev/github.com/otfabric/go-iec60870-5/telecontrol#ErrResultLimit).
 
+#### func (Client) Parameter
+
+```go
+func (c *Client) Parameter(ctx context.Context, ca asdu.CommonAddr, obj asdu.InformationObject) error
+```
+
+Parameter loads a parameter of measured value ([asdu.ParameterNormalized](https://pkg.go.dev/github.com/otfabric/go-iec60870-5/asdu#ParameterNormalized), [asdu.ParameterScaled](https://pkg.go.dev/github.com/otfabric/go-iec60870-5/asdu#ParameterScaled) or [asdu.ParameterFloat](https://pkg.go.dev/github.com/otfabric/go-iec60870-5/asdu#ParameterFloat): a threshold, smoothing factor or limit of a measured value) or sends a parameter activation ([asdu.ParameterActivation](https://pkg.go.dev/github.com/otfabric/go-iec60870-5/asdu#ParameterActivation)) with cause "activation", and waits for the activation confirmation (IEC 60870-5-101:2003 7.4.9 and 7.4.10, which IEC 60870-5-104 takes over).
+
+A negative confirmation or an "unknown ..." answer is returned as [\*iec104.NegativeError](https://pkg.go.dev/github.com/otfabric/go-iec60870-5/iec104#NegativeError).
+
 #### func (Client) PutFile
 
 ```go
@@ -415,6 +425,14 @@ func (g *Group) ListFiles(ctx context.Context, ca asdu.CommonAddr, ioa asdu.IOA)
 ```
 
 ListFiles calls the directory over the active connection. See [Client.ListFiles](#func-client-listfiles).
+
+#### func (Group) Parameter
+
+```go
+func (g *Group) Parameter(ctx context.Context, ca asdu.CommonAddr, obj asdu.InformationObject) error
+```
+
+Parameter loads a parameter or activates parameters over the active connection. See [Client.Parameter](#func-client-parameter).
 
 #### func (Group) PutFile
 

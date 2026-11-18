@@ -87,7 +87,7 @@ last time-out, the error wraps both `ErrUnexpected` and `ErrTimeout`. `SendConfi
 
 `Requester` runs controlling-station requests over a `Send` function the
 companion standard supplies, and its `Dispatch` routes received ASDUs to
-them: `Interrogate`, `CounterInterrogate`, `Read`, `Command`, `ClockSync`,
+them: `Interrogate`, `CounterInterrogate`, `Read`, `Command`, `Parameter`, `ClockSync`,
 `TestCommand`, `ResetProcess`, `MeasureDelay`, `SetDelay`, and the
 building blocks `Confirmed` and `Collect`. `FailAll` ends outstanding requests.
 `MaxResult` bounds what one `Collect` returns (`ErrResultLimit`).
@@ -111,7 +111,7 @@ err = c.Command(ctx, ca, asdu.SingleCommand{IOA: 500, Value: true, Select: true}
 
 Client methods: `WaitUp`, `State`, `Close`, `Done`, `Err`, `Send`,
 `Interrogate`, `CounterInterrogate`, `Read`, `Command`, `Deactivate`,
-`ClockSync`, `TestCommand` (C_TS_NA_1), `ResetProcess`, `MeasureDelay`,
+`Parameter` (P_ME_NA/NB/NC_1, P_AC_NA_1), `ClockSync`, `TestCommand` (C_TS_NA_1), `ResetProcess`, `MeasureDelay`,
 `SetDelay` (C_CD_NA_1). `WaitUp` returns after `Config.OnState` for the
 change to `StateUp` has returned; a request returns at its context
 deadline even while the link layer is still repeating it. A request from

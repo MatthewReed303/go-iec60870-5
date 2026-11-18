@@ -188,6 +188,14 @@ MeasureDelay measures the transmission delay to a station with the delay acquisi
 
 The formula is that of IEC 60870-5-5 6.13 as IEC 60870-5-101 refers to it; we do not hold IEC 60870-5-5, so it is an interpretation. Send the result with [Requester.SetDelay](#func-requester-setdelay).
 
+#### func (Requester) Parameter
+
+```go
+func (r *Requester) Parameter(ctx context.Context, ca asdu.CommonAddr, obj asdu.InformationObject) error
+```
+
+Parameter loads a parameter of measured value (P\_ME\_NA\_1, P\_ME\_NB\_1, P\_ME\_NC\_1) or sends a parameter activation (P\_AC\_NA\_1) with cause activation and waits for its confirmation (IEC 60870-5-101:2003 7.4.9, parameter loading; 7.4.10, parameter activation).
+
 #### func (Requester) Read
 
 ```go

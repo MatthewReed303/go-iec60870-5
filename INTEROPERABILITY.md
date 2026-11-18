@@ -174,6 +174,7 @@ with the fitting "unknown ..." cause (7.2.3) or drops it.
 | Clock synchronization (C_CS_NA_1) | `ClockSync` | handler | e2e, independent |
 | Test command (C_TS_NA_1, fixed test pattern) | `TestCommand` | handler | e2e, independent |
 | Reset process (C_RP_NA_1) | `ResetProcess` | handler | e2e |
+| Parameter loading (P_ME_NA/NB/NC_1, 7.4.9) and activation (P_AC_NA_1, 7.4.10) | `Parameter` | handler | e2e |
 | Delay acquisition (C_CD_NA_1, 7.4.12): measurement with cause activation, setting the delay with cause spontaneous | `MeasureDelay`, `SetDelay` | handler (the clock correction is the application's) | e2e |
 | Process commands, direct and select-before-operate, deactivation | `Command`, `Deactivate` | handler | e2e, independent (C_SC, C_DC, C_RC, C_SE_NA/NB/NC), recorded (C_DC_NA_1 select and execute) |
 | Spontaneous (class 1) and cyclic (class 2) data | handler | `Send`, `SendClass` | e2e, independent (class 1 reports), recorded (CP24Time2a and CP56Time2a types, periodic M_ME_NC_1) |

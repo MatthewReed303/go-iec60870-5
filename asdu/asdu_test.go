@@ -642,6 +642,9 @@ func TestMetadata(t *testing.T) {
 	if !C_BO_TA_1.IsProcessCommand() || C_IC_NA_1.IsProcessCommand() {
 		t.Error("IsProcessCommand")
 	}
+	if !P_ME_NA_1.IsParameter() || !P_AC_NA_1.IsParameter() || C_BO_TA_1.IsParameter() || F_FR_NA_1.IsParameter() {
+		t.Error("IsParameter")
+	}
 	for c, want := range map[Cause]string{
 		CauseSpontaneous: "spontaneous", CauseInterrogatedStation: "interrogated-station",
 		CauseInterrogatedGroup1 + 4: "interrogated-group-5", CauseCounterGroup4: "counter-group-4",

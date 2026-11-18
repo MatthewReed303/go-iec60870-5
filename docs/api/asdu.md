@@ -1688,6 +1688,14 @@ func (t TypeID) IsFileTransfer() bool
 
 IsFileTransfer reports whether the type belongs to the file transfer services (120..127).
 
+#### func (TypeID) IsParameter
+
+```go
+func (t TypeID) IsParameter() bool
+```
+
+IsParameter reports whether the type is a parameter in control direction: a parameter of measured value (P\_ME\_NA\_1, P\_ME\_NB\_1, P\_ME\_NC\_1) or a parameter activation (P\_AC\_NA\_1), IEC 60870-5-101:2003 7.3.5.
+
 #### func (TypeID) IsPrivate
 
 ```go

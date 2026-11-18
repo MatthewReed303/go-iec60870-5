@@ -137,6 +137,14 @@ func (c *Client) MeasureDelay(ctx context.Context, ca asdu.CommonAddr) (time.Dur
 
 MeasureDelay measures the transmission delay with the delay acquisition procedure (C\_CD\_NA\_1, cause activation). See [telecontrol.Requester.MeasureDelay](https://pkg.go.dev/github.com/otfabric/go-iec60870-5/telecontrol#Requester.MeasureDelay).
 
+#### func (Client) Parameter
+
+```go
+func (c *Client) Parameter(ctx context.Context, ca asdu.CommonAddr, obj asdu.InformationObject) error
+```
+
+Parameter loads a parameter of measured value (P\_ME\_NA\_1, P\_ME\_NB\_1, P\_ME\_NC\_1: a threshold, smoothing factor or limit of a measured value) or activates parameters (P\_AC\_NA\_1), and waits for the activation confirmation. A refusal is a [\*telecontrol.NegativeError](https://pkg.go.dev/github.com/otfabric/go-iec60870-5/telecontrol#NegativeError).
+
 #### func (Client) Read
 
 ```go

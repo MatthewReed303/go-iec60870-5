@@ -186,6 +186,13 @@ func (t TypeID) IsProcessCommand() bool {
 	return t >= 45 && t <= 69
 }
 
+// IsParameter reports whether the type is a parameter in control direction:
+// a parameter of measured value (P_ME_NA_1, P_ME_NB_1, P_ME_NC_1) or a
+// parameter activation (P_AC_NA_1), IEC 60870-5-101:2003 7.3.5.
+func (t TypeID) IsParameter() bool {
+	return t >= P_ME_NA_1 && t <= P_AC_NA_1
+}
+
 // IsFileTransfer reports whether the type belongs to the file transfer
 // services (120..127).
 func (t TypeID) IsFileTransfer() bool {

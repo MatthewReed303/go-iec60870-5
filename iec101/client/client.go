@@ -701,6 +701,17 @@ func (c *Client) Read(ctx context.Context, ca asdu.CommonAddr, ioa asdu.IOA) (*a
 	return c.req.Read(ctx, ca, ioa)
 }
 
+// Parameter loads a parameter of measured value (P_ME_NA_1, P_ME_NB_1,
+// P_ME_NC_1: a threshold, smoothing factor or limit of a measured value)
+// or activates parameters (P_AC_NA_1), and waits for the activation
+// confirmation. A refusal is a [*telecontrol.NegativeError].
+func (c *Client) Parameter(ctx context.Context, ca asdu.CommonAddr, obj asdu.InformationObject) error {
+	if err := c.inHandler("parameter"); err != nil {
+		return err
+	}
+	return c.req.Parameter(ctx, ca, obj)
+}
+
 // Command sends a process command and waits for its activation
 // confirmation. For select-before-operate call it twice, first with the
 // object's Select set. A refusal is a [*telecontrol.NegativeError].

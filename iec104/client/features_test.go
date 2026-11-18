@@ -489,6 +489,7 @@ func TestGroup(t *testing.T) {
 	for name, err := range map[string]error{
 		"Command":      g.Command(ctx, 1, asdu.SingleCommand{IOA: 1, Value: true}),
 		"Deactivate":   g.Deactivate(ctx, 1, asdu.SingleCommand{IOA: 1, Select: true}),
+		"Parameter":    g.Parameter(ctx, 1, asdu.ParameterFloat{IOA: 1, Value: 1, Qualifier: asdu.ParameterThreshold}),
 		"ClockSync":    g.ClockSync(ctx, 1, time.Now()),
 		"TestCommand":  g.TestCommand(ctx, 1),
 		"ResetProcess": g.ResetProcess(ctx, 1, asdu.ResetProcessGeneral),

@@ -638,6 +638,16 @@ func (g *Group) Command(ctx context.Context, ca asdu.CommonAddr, obj asdu.Inform
 	return c.Command(ctx, ca, obj)
 }
 
+// Parameter loads a parameter or activates parameters over the active
+// connection. See [Client.Parameter].
+func (g *Group) Parameter(ctx context.Context, ca asdu.CommonAddr, obj asdu.InformationObject) error {
+	c, err := g.use()
+	if err != nil {
+		return err
+	}
+	return c.Parameter(ctx, ca, obj)
+}
+
 // Deactivate cancels a selected command over the active connection. See
 // [Client.Deactivate].
 func (g *Group) Deactivate(ctx context.Context, ca asdu.CommonAddr, obj asdu.InformationObject) error {

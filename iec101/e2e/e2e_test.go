@@ -32,6 +32,8 @@ type station struct {
 	clock    time.Time
 	delay    time.Duration
 	resets   int
+	// threshold is the last parameter of measured value loaded.
+	threshold float32
 }
 
 func (st *station) HandleASDU(s *server.Server, a *asdu.ASDU) {
@@ -103,6 +105,11 @@ func (st *station) HandleASDU(s *server.Server, a *asdu.ASDU) {
 	case asdu.ResetProcess:
 		st.resets++
 		_ = s.Confirm(a)
+	case asdu.ParameterFloat:
+		st.threshold = o.Value
+		_ = s.Confirm(a)
+	case asdu.ParameterActivation:
+		_ = s.Negative(a)
 	default:
 		_ = s.Reject(a, asdu.CauseUnknownType)
 	}
@@ -241,6 +248,26 @@ func TestServices(t *testing.T) {
 			}
 			if err := r.c.ResetProcess(ctx, 9, asdu.ResetProcessGeneral); !errors.As(err, &neg) || neg.Cause() != asdu.CauseUnknownCommonAddr {
 				t.Fatalf("unknown CA: %v", err)
+			}
+
+			// Parameter loading is confirmed; a refused activation is a negative confirmation.
+			if err := r.c.Parameter(ctx, ca, asdu.ParameterFloat{IOA: 200, Value: 0.5, Qualifier: asdu.ParameterThreshold}); err != nil {
+				t.Fatalf("parameter: %v", err)
+			}
+			r.st.mu.Lock()
+			if r.st.threshold != 0.5 {
+				t.Errorf("threshold %v", r.st.threshold)
+			}
+			r.st.mu.Unlock()
+			if err := r.c.Parameter(ctx, ca, asdu.ParameterActivation{IOA: 200, Qualifier: asdu.ActivateObjectParameter}); !errors.As(err, &neg) ||
+				neg.Cause() != asdu.CauseActivationCon {
+				t.Fatalf("refused activation: %v", err)
+			}
+			if err := r.c.Parameter(ctx, ca, asdu.SingleCommand{IOA: 500}); !errors.Is(err, asdu.ErrTypeMismatch) {
+				t.Fatalf("a command as a parameter: %v", err)
+			}
+			if err := r.c.Parameter(ctx, ca, nil); !errors.Is(err, asdu.ErrInvalidValue) {
+				t.Fatalf("nil parameter: %v", err)
 			}
 
 			// Spontaneous and class 2 data reach the handler.

@@ -349,7 +349,7 @@ The test bit and the P/N bit are exposed as `ASDU.Test` and `ASDU.Negative`.
 | Commands with time tag | set `Time` on the command | app: the handler checks the age |
 | Test procedure (`C_TS_TA_1`) | `TestCommand` | app, via `Mux` |
 | Reset process | `ResetProcess` | app, via `Mux` |
-| Parameter loading and activation | `Send` | app, via `Mux` |
+| Parameter loading and activation | `Parameter` | app, via `Mux` |
 | File transfer, monitor direction (download) | `GetFile` | `FileServer`, via `Mux` |
 | File transfer, control direction (upload) | `PutFile` | `FileServer` with a `FileSink`, via `Mux` |
 | File directory | `ListFiles` | `FileServer.Directory`, via `Mux` |

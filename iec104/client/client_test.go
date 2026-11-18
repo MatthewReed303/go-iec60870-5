@@ -118,7 +118,7 @@ func newStation(t *testing.T, opts ...server.Option) *station {
 		default:
 			_ = s.Reject(req, asdu.CauseUnknownIOA)
 		}
-	}), server.ProcessCommands...)
+	}), append(append([]asdu.TypeID{}, server.ProcessCommands...), asdu.P_ME_NA_1, asdu.P_ME_NB_1, asdu.P_ME_NC_1)...)
 
 	srv, err := server.New(mux, append([]server.Option{server.WithParams(testutil.Params())}, opts...)...)
 	if err != nil {
@@ -289,6 +289,49 @@ func TestCommands(t *testing.T) {
 	}
 	if err := c.Command(ctx, stationCA, asdu.SingleCommand{IOA: ioaSwitch, Qualifier: 99}); !errors.Is(err, asdu.ErrInvalidValue) {
 		t.Errorf("unencodable command: %v", err)
+	}
+}
+
+func TestParameters(t *testing.T) {
+	st := newStation(t)
+	c := dial(t, st.addr)
+	ctx := context.Background()
+
+	for _, p := range []asdu.InformationObject{
+		asdu.ParameterNormalized{IOA: ioaSwitch, Value: asdu.NormalizedFromFloat(0.25), Qualifier: asdu.ParameterThreshold},
+		asdu.ParameterScaled{IOA: ioaSwitch, Value: 120, Qualifier: asdu.ParameterLowLimit},
+		asdu.ParameterFloat{IOA: ioaSwitch, Value: 1.5, Qualifier: asdu.ParameterSmoothing},
+	} {
+		if err := c.Parameter(ctx, stationCA, p); err != nil {
+			t.Fatalf("%T: %v", p, err)
+		}
+	}
+	got := st.recorded()
+	if len(got) != 3 || got[0].Type != asdu.P_ME_NA_1 || got[1].Type != asdu.P_ME_NB_1 || got[2].Cause != asdu.CauseActivation {
+		t.Fatalf("station saw %v", got)
+	}
+	if f := got[2].First().(asdu.ParameterFloat); f.Value != 1.5 || f.Qualifier != asdu.ParameterSmoothing {
+		t.Errorf("parameter: %+v", f)
+	}
+
+	err := c.Parameter(ctx, stationCA, asdu.ParameterFloat{IOA: ioaInterlock, Value: 2})
+	if got := negativeCause(t, err); got != asdu.CauseActivationCon {
+		t.Errorf("refused parameter: cause %s", got)
+	}
+	err = c.Parameter(ctx, stationCA, asdu.ParameterFloat{IOA: 1, Value: 2})
+	if got := negativeCause(t, err); got != asdu.CauseUnknownIOA {
+		t.Errorf("unknown object: cause %s", got)
+	}
+	// This station does not take parameter activations: the type comes back as unknown.
+	err = c.Parameter(ctx, stationCA, asdu.ParameterActivation{IOA: ioaSwitch, Qualifier: asdu.ActivateObjectParameter})
+	if got := negativeCause(t, err); got != asdu.CauseUnknownType {
+		t.Errorf("parameter activation: cause %s", got)
+	}
+	if err := c.Parameter(ctx, stationCA, asdu.SingleCommand{IOA: ioaSwitch}); !errors.Is(err, asdu.ErrTypeMismatch) {
+		t.Errorf("command as parameter: %v", err)
+	}
+	if err := c.Parameter(ctx, stationCA, nil); !errors.Is(err, asdu.ErrInvalidValue) {
+		t.Errorf("nil parameter: %v", err)
 	}
 }
 
