@@ -445,3 +445,62 @@ func TestRedundancyGroups(t *testing.T) {
 		t.Errorf("Enqueue after Close: %v", err)
 	}
 }
+
+// ClearEvents empties a group's queue of what is not yet sent; with
+// timeTagged only the events with a time tag (QRP 2), the rest delivered
+// in order.
+func TestClearEvents(t *testing.T) {
+	srv, addr := serve(t, server.HandlerFunc(confirmAll),
+		server.WithRedundancyGroups(server.RedundancyGroup{Name: "local", Allow: []string{"127.0.0.0/8"}}, server.RedundancyGroup{Name: "rest"}))
+	tagged := func(i int) *asdu.ASDU {
+		return asdu.New(asdu.CauseSpontaneous, 1, asdu.MeasuredScaled{IOA: 2, Value: int16(i), Time: asdu.Now()})
+	}
+	for i := 1; i <= 6; i++ {
+		a := event(i)
+		if i%2 == 0 {
+			a = tagged(i)
+		}
+		if err := srv.Enqueue(a); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if n := srv.ClearEvents("local", true); n != 3 {
+		t.Fatalf("ClearEvents(local, timeTagged) = %d, want 3", n)
+	}
+	if srv.Pending("local") != 3 || srv.Pending("rest") != 6 {
+		t.Fatalf("Pending local=%d rest=%d, want 3 and 6", srv.Pending("local"), srv.Pending("rest"))
+	}
+	if n := srv.ClearEvents("no-such-group", false); n != 0 {
+		t.Fatalf("an unknown group cleared %d", n)
+	}
+	rx := &events{}
+	connect(t, addr, client.WithHandler(rx))
+	testutil.Eventually(t, "delivery", func() bool { return len(rx.values()) == 3 })
+	if got := rx.values(); got[0] != 1 || got[1] != 3 || got[2] != 5 {
+		t.Errorf("received %v, want the events without time tag, 1 3 5", got)
+	}
+	testutil.Eventually(t, "acknowledgement", func() bool { return srv.Pending("local") == 0 })
+	if n := srv.ClearEvents("", false); n != 6 || srv.Pending("rest") != 0 {
+		t.Errorf("ClearEvents(every group) = %d, rest pending %d; want 6 and 0", n, srv.Pending("rest"))
+	}
+}
+
+// An event sent and awaiting its acknowledgement is not cleared: it leaves
+// the queue when the controlling station acknowledges it.
+func TestClearEventsKeepsWhatIsInFlight(t *testing.T) {
+	srv, addr := serve(t, server.HandlerFunc(confirmAll))
+	p := testutil.Params()
+	p.W = 100 // the controlling station acknowledges at t2 only, within the server's t1
+	p.T2 = time.Second
+	rx := &events{}
+	connect(t, addr, client.WithHandler(rx), client.WithParams(p))
+	enqueue(t, srv, 1, 3)
+	testutil.Eventually(t, "delivery", func() bool { return len(rx.values()) == 3 })
+	if n := srv.Pending("default"); n != 3 {
+		t.Fatalf("Pending = %d before the acknowledgement, want 3", n)
+	}
+	if n := srv.ClearEvents("default", false); n != 0 {
+		t.Errorf("ClearEvents removed %d events in flight", n)
+	}
+	testutil.Eventually(t, "acknowledgement", func() bool { return srv.Pending("default") == 0 })
+}
