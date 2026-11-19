@@ -449,7 +449,7 @@ func (g *group) clear(timeTagged bool) int {
 	kept := g.queue[:0]
 	n := 0
 	for _, q := range g.queue {
-		if q.owner == nil && (!timeTagged || len(q.raw) > 0 && asdu.TypeID(q.raw[0]).HasTimeTag()) {
+		if q.owner == nil && (!timeTagged || asdu.TypeID(q.raw[0]).HasTimeTag()) {
 			n++
 			continue
 		}

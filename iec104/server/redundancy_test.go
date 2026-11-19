@@ -5,7 +5,9 @@ package server_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -503,4 +505,45 @@ func TestClearEventsKeepsWhatIsInFlight(t *testing.T) {
 		t.Errorf("ClearEvents removed %d events in flight", n)
 	}
 	testutil.Eventually(t, "acknowledgement", func() bool { return srv.Pending("default") == 0 })
+}
+
+// warnings counts the warnings a server logs.
+type warnings struct {
+	mu   sync.Mutex
+	full int
+}
+
+func (w *warnings) Debugf(string, ...any) {}
+func (w *warnings) Infof(string, ...any)  {}
+func (w *warnings) Errorf(string, ...any) {}
+func (w *warnings) Warnf(format string, args ...any) {
+	if strings.Contains(fmt.Sprintf(format, args...), "event queue full") {
+		w.mu.Lock()
+		w.full++
+		w.mu.Unlock()
+	}
+}
+
+func (w *warnings) count() int {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.full
+}
+
+// A queue that overflowed and is cleared below half its size warns again
+// when it next overflows, as one emptied by acknowledgements does.
+func TestClearEventsEndsOverflow(t *testing.T) {
+	w := &warnings{}
+	srv, _ := serve(t, server.HandlerFunc(confirmAll), server.WithEventQueue(4), server.WithLogger(w))
+	enqueue(t, srv, 1, 6)
+	if w.count() != 1 || srv.Dropped("default") != 2 {
+		t.Fatalf("after the overflow: %d warnings, %d dropped; want 1 and 2", w.count(), srv.Dropped("default"))
+	}
+	if n := srv.ClearEvents("default", false); n != 4 {
+		t.Fatalf("ClearEvents = %d, want 4", n)
+	}
+	enqueue(t, srv, 7, 11)
+	if w.count() != 2 {
+		t.Errorf("%d warnings after the second overflow, want 2", w.count())
+	}
 }
