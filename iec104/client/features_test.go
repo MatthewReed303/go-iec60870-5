@@ -456,6 +456,9 @@ func TestGroup(t *testing.T) {
 	if _, err := g.Interrogate(ctx, 1, asdu.QOIStation); !errors.Is(err, iec104.ErrNotConnected) {
 		t.Errorf("request before Connect: %v", err)
 	}
+	if err := g.Parameter(ctx, 1, asdu.ParameterFloat{IOA: 1, Value: 1}); !errors.Is(err, iec104.ErrNotConnected) {
+		t.Errorf("Parameter before Connect: %v", err)
+	}
 	if err := g.Switchover(ctx); !errors.Is(err, iec104.ErrNotConnected) {
 		t.Errorf("Switchover before Connect: %v", err)
 	}
