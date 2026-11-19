@@ -456,6 +456,9 @@ func TestGroup(t *testing.T) {
 	if _, err := g.Interrogate(ctx, 1, asdu.QOIStation); !errors.Is(err, iec104.ErrNotConnected) {
 		t.Errorf("request before Connect: %v", err)
 	}
+	if err := g.Parameter(ctx, 1, asdu.ParameterFloat{IOA: 1, Value: 1}); !errors.Is(err, iec104.ErrNotConnected) {
+		t.Errorf("Parameter before Connect: %v", err)
+	}
 	if err := g.Switchover(ctx); !errors.Is(err, iec104.ErrNotConnected) {
 		t.Errorf("Switchover before Connect: %v", err)
 	}
@@ -489,6 +492,7 @@ func TestGroup(t *testing.T) {
 	for name, err := range map[string]error{
 		"Command":      g.Command(ctx, 1, asdu.SingleCommand{IOA: 1, Value: true}),
 		"Deactivate":   g.Deactivate(ctx, 1, asdu.SingleCommand{IOA: 1, Select: true}),
+		"Parameter":    g.Parameter(ctx, 1, asdu.ParameterFloat{IOA: 1, Value: 1, Qualifier: asdu.ParameterThreshold}),
 		"ClockSync":    g.ClockSync(ctx, 1, time.Now()),
 		"TestCommand":  g.TestCommand(ctx, 1),
 		"ResetProcess": g.ResetProcess(ctx, 1, asdu.ResetProcessGeneral),

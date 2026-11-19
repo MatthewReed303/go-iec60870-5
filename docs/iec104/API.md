@@ -174,6 +174,7 @@ func (c *Client) Read(ctx context.Context, ca asdu.CommonAddr, ioa asdu.IOA) (*a
 func (c *Client) ClockSync(ctx context.Context, ca asdu.CommonAddr, t time.Time) error
 func (c *Client) Command(ctx context.Context, ca asdu.CommonAddr, obj asdu.InformationObject) error
 func (c *Client) Deactivate(ctx context.Context, ca asdu.CommonAddr, obj asdu.InformationObject) error
+func (c *Client) Parameter(ctx context.Context, ca asdu.CommonAddr, obj asdu.InformationObject) error
 func (c *Client) TestCommand(ctx context.Context, ca asdu.CommonAddr) error
 func (c *Client) ResetProcess(ctx context.Context, ca asdu.CommonAddr, qualifier uint8) error
 func (c *Client) GetFile(ctx context.Context, ca asdu.CommonAddr, ioa asdu.IOA, name uint16) ([]byte, error)
@@ -189,6 +190,7 @@ func (c *Client) ListFiles(ctx context.Context, ca asdu.CommonAddr, ioa asdu.IOA
 | `ClockSync` | `C_CS_NA_1` activation | activation confirmation |
 | `Command` | process command, activation | activation confirmation |
 | `Deactivate` | process command, deactivation | deactivation confirmation |
+| `Parameter` | `P_ME_NA_1`, `P_ME_NB_1`, `P_ME_NC_1` or `P_AC_NA_1` activation | activation confirmation |
 | `TestCommand` | `C_TS_TA_1` activation, test sequence counter 0, 1, 2, … per client | activation confirmation |
 | `ResetProcess` | `C_RP_NA_1` activation | activation confirmation |
 | `GetFile` | `F_SC_NA_1` select, then the calls and acknowledgements of the procedure | the file is acknowledged; result is its content |
@@ -198,6 +200,9 @@ func (c *Client) ListFiles(ctx context.Context, ca asdu.CommonAddr, ioa asdu.IOA
 - `Command` accepts `SingleCommand`, `DoubleCommand`, `StepCommand`,
   `SetpointNormalized`, `SetpointScaled`, `SetpointFloat` and
   `BitstringCommand`. A non-zero `Time` selects the CP56Time2a type.
+- `Parameter` accepts `ParameterNormalized`, `ParameterScaled`,
+  `ParameterFloat` (parameter loading, IEC 60870-5-101:2003 7.4.9) and
+  `ParameterActivation` (7.4.10); any other object is `asdu.ErrTypeMismatch`.
 - Collected ASDUs are also delivered to the `Handler`.
 - Two requests with the same type, common address and object address cannot
   be pending at once (`ErrBusy`): their answers would be indistinguishable.
@@ -243,7 +248,7 @@ func (c *Client) Send(ctx context.Context, a *asdu.ASDU) error
 ```
 
 Transmits one ASDU and does not wait for an answer. Blocks while the send
-window is full. For parameters, private types, file deletion and anything
+window is full. For private types, file deletion and anything
 else the request methods leave out.
 
 ### Redundancy group
@@ -264,6 +269,7 @@ func (g *Group) Read(ctx context.Context, ca asdu.CommonAddr, ioa asdu.IOA) (*as
 func (g *Group) ClockSync(ctx context.Context, ca asdu.CommonAddr, t time.Time) error
 func (g *Group) Command(ctx context.Context, ca asdu.CommonAddr, obj asdu.InformationObject) error
 func (g *Group) Deactivate(ctx context.Context, ca asdu.CommonAddr, obj asdu.InformationObject) error
+func (g *Group) Parameter(ctx context.Context, ca asdu.CommonAddr, obj asdu.InformationObject) error
 func (g *Group) TestCommand(ctx context.Context, ca asdu.CommonAddr) error
 func (g *Group) ResetProcess(ctx context.Context, ca asdu.CommonAddr, qualifier uint8) error
 func (g *Group) GetFile(ctx context.Context, ca asdu.CommonAddr, ioa asdu.IOA, name uint16) ([]byte, error)

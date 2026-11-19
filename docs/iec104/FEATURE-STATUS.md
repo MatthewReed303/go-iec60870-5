@@ -54,6 +54,7 @@ The library is pure Go with no dependencies outside the standard library.
 | Clock synchronization, test command | ✅ | `TestSystemCommands` | all five |
 | Commands, direct and select-before-operate, deactivation | ✅ | `TestCommands`, `TestSelectBeforeOperate` | all five |
 | Commands with time tag | ✅ | `TestCommands` | lib60870-C, j60870, cB-Sigma, part5; go-iecp5 drops them |
+| Parameter loading and activation, confirmed (`Client.Parameter`) | ✅ | `TestParameters` (client package) | none |
 | Refusals (unknown type, cause, common address, object) | ✅ | `TestRefusals` | all five |
 | Types outside the reference fixture (protection events, packed single points, bitstring commands, parameters, reset process, delay acquisition, end of initialization) | ✅ | `TestWireMatrix` | none: this repository's tests only |
 | Other field sizes, IEC 60870-5-101 widths | ✅ | `TestWireMatrixOtherParameters` | none |

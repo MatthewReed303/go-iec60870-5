@@ -1,5 +1,18 @@
 # Release notes
 
+## Unreleased
+
+Confirmed parameter loading and activation in the controlling station:
+`Parameter` on the IEC 104 `Client` and `Group`, the IEC 101 `Client`
+and `telecontrol.Requester` sends a parameter of measured value
+(P_ME_NA_1, P_ME_NB_1, P_ME_NC_1) or a parameter activation (P_AC_NA_1)
+with cause activation and waits for the activation confirmation, as
+`Command` does for process commands; `asdu.TypeID.IsParameter` names the
+four types. Before, parameters could only be sent with `Send`, which does
+not wait for the station's answer. Nothing is removed or changed.
+
+---
+
 ## v0.9.0
 
 **Date:** 2026-11-16

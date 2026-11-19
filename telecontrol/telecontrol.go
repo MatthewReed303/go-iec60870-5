@@ -481,6 +481,21 @@ func (r *Requester) Command(ctx context.Context, ca asdu.CommonAddr, obj asdu.In
 	return r.Confirmed(ctx, req)
 }
 
+// Parameter loads a parameter of measured value (P_ME_NA_1, P_ME_NB_1,
+// P_ME_NC_1) or sends a parameter activation (P_AC_NA_1) with cause
+// activation and waits for its confirmation (IEC 60870-5-101:2003 7.4.9,
+// parameter loading; 7.4.10, parameter activation).
+func (r *Requester) Parameter(ctx context.Context, ca asdu.CommonAddr, obj asdu.InformationObject) error {
+	if obj == nil {
+		return fmt.Errorf("%w: nil parameter", asdu.ErrInvalidValue)
+	}
+	req := asdu.New(asdu.CauseActivation, ca, obj)
+	if !req.Type.IsParameter() {
+		return fmt.Errorf("%w: %T is not a parameter", asdu.ErrTypeMismatch, obj)
+	}
+	return r.Confirmed(ctx, req)
+}
+
 // ClockSync sends a clock synchronization command (C_CS_NA_1).
 func (r *Requester) ClockSync(ctx context.Context, ca asdu.CommonAddr, t time.Time) error {
 	return r.Confirmed(ctx, asdu.New(asdu.CauseActivation, ca, asdu.ClockSync{Time: asdu.At(t)}))

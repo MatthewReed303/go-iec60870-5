@@ -235,7 +235,7 @@ func TestRequestFromHandlerFailsAtOnce(t *testing.T) {
 	for _, mode := range modes {
 		t.Run(mode.String()+"/Handler", func(t *testing.T) {
 			check := leakcheck.Check(t)
-			got, ready := make(chan error, 1), make(chan struct{})
+			got, ready := make(chan error, 2), make(chan struct{})
 			var once sync.Once
 			var c *client.Client
 			c, s, _, _ := stations(t, mode, func(cc *client.Config, _ *server.Config) {
@@ -249,6 +249,7 @@ func TestRequestFromHandlerFailsAtOnce(t *testing.T) {
 						defer cancel()
 						_, err := c.Interrogate(ctx, ca, asdu.QOIStation)
 						got <- err
+						got <- c.Parameter(ctx, ca, asdu.ParameterFloat{IOA: 200, Value: 1, Qualifier: asdu.ParameterThreshold})
 					})
 				}
 			})
@@ -258,6 +259,9 @@ func TestRequestFromHandlerFailsAtOnce(t *testing.T) {
 			}
 			if err := recv(t, got, "the interrogation from the Handler"); !errors.Is(err, iec101.ErrInHandler) {
 				t.Errorf("Interrogate from the Handler: %v, want ErrInHandler", err)
+			}
+			if err := recv(t, got, "the parameter from the Handler"); !errors.Is(err, iec101.ErrInHandler) {
+				t.Errorf("Parameter from the Handler: %v, want ErrInHandler", err)
 			}
 			_ = c.Close()
 			_ = s.Close()

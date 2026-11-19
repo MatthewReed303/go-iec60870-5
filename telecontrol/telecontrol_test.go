@@ -137,6 +137,18 @@ func TestRequests(t *testing.T) {
 		func() error { return r.TestCommand(ctx, 1, false) },
 		func() error { return r.TestCommand(ctx, 1, true) },
 		func() error { return r.ResetProcess(ctx, 1, asdu.ResetProcessGeneral) },
+		func() error {
+			return r.Parameter(ctx, 1, asdu.ParameterNormalized{IOA: 1, Qualifier: asdu.ParameterThreshold})
+		},
+		func() error {
+			return r.Parameter(ctx, 1, asdu.ParameterScaled{IOA: 1, Qualifier: asdu.ParameterLowLimit})
+		},
+		func() error {
+			return r.Parameter(ctx, 1, asdu.ParameterFloat{IOA: 1, Qualifier: asdu.ParameterSmoothing})
+		},
+		func() error {
+			return r.Parameter(ctx, 1, asdu.ParameterActivation{IOA: 1, Qualifier: asdu.ActivateObjectParameter})
+		},
 		func() error { return r.SetDelay(ctx, 1, time.Hour) },
 		func() error {
 			d, err := r.MeasureDelay(ctx, 1)
@@ -155,6 +167,12 @@ func TestRequests(t *testing.T) {
 	}
 	if err := r.Command(ctx, 1, asdu.SinglePoint{IOA: 1}, false); !errors.Is(err, asdu.ErrTypeMismatch) {
 		t.Error(err)
+	}
+	if err := r.Parameter(ctx, 1, nil); !errors.Is(err, asdu.ErrInvalidValue) {
+		t.Errorf("nil parameter: %v", err)
+	}
+	if err := r.Parameter(ctx, 1, asdu.SingleCommand{IOA: 1}); !errors.Is(err, asdu.ErrTypeMismatch) {
+		t.Errorf("a command as a parameter: %v", err)
 	}
 }
 
